@@ -9,6 +9,8 @@ authors = [ "mikezaby@gmail.com"  ]
 name = "chip8"
 path = "src/main.rs"
 
-[dependencies.sdl]
+[dependencies]
+rand = "0.3"
 
+[dependencies.sdl]
 git = "https://github.com/brson/rust-sdl.git"
