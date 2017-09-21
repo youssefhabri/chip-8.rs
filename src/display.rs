@@ -7,15 +7,15 @@ pub struct Display {
     screen: video::Surface,
 }
 
-static scale: isize = 20;
+static SCALE: isize = 20;
 
 impl Display {
     pub fn new() -> Display {
         Display {
             gfx: [[0; 64]; 32],
             draw_flag: true,
-            screen: video::set_video_mode(64 * scale,
-                                          32 * scale,
+            screen: video::set_video_mode(64 * SCALE,
+                                          32 * SCALE,
                                           8,
                                           &[video::SurfaceFlag::HWSurface],
                                           &[video::VideoFlag::DoubleBuf])
@@ -57,9 +57,9 @@ impl Display {
             return;
         }
         let mut pixel: u8;
-        let sc = scale as u16;
-        // let pt = |&: p: usize| { (p as i16) * (scale as i16) };
-        let pt = |p: usize| (p as i16) * (scale as i16);
+        let sc = SCALE as u16;
+        // let pt = |&: p: usize| { (p as i16) * (SCALE as i16) };
+        let pt = |p: usize| (p as i16) * (SCALE as i16);
 
         for y in 0..32 {
             for x in 0..64 {

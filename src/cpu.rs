@@ -3,7 +3,7 @@ extern crate rand;
 use std::fs::File;
 use std::io::Read;
 // use std::rand;
-use std::{os, env, num};
+use std::{env, num};
 
 use display::Display;
 use keypad::Keypad;
@@ -39,7 +39,7 @@ impl Cpu {
         };
 
         for i in 0..80 {
-            cpu.memory[i] = fontset[i];
+            cpu.memory[i] = FONTSET[i];
         }
         cpu
     }
@@ -59,7 +59,7 @@ impl Cpu {
             self.sound_timer -= 1;
         }
 
-        for i in 0..10000 {}
+        for _ in 0..10000 {}
     }
 
     pub fn load_game(&mut self, game: String) {
@@ -84,7 +84,7 @@ impl Cpu {
                     self.memory[self.pc] = value;
                     self.pc += 1;
                 }
-                Err(e) => self.pc = 0x200,
+                Err(_) => self.pc = 0x200,
             }
         }
         self.pc = 0x200;
@@ -105,12 +105,12 @@ impl Cpu {
             0x7000 => self.op_7xxx(),
             0x8000 => self.op_8xxx(),
             0x9000 => self.op_9xxx(),
-            0xA000 => self.op_Axxx(),
-            0xB000 => self.op_Bxxx(),
-            0xC000 => self.op_Cxxx(),
-            0xD000 => self.op_Dxxx(),
-            0xE000 => self.op_Exxx(),
-            0xF000 => self.op_Fxxx(),
+            0xA000 => self.op_axxx(),
+            0xB000 => self.op_bxxx(),
+            0xC000 => self.op_cxxx(),
+            0xD000 => self.op_dxxx(),
+            0xE000 => self.op_exxx(),
+            0xF000 => self.op_fxxx(),
             _ => not_implemented(self.opcode as usize, self.pc),
         }
     }
@@ -174,11 +174,14 @@ impl Cpu {
 
     // Adds NN to VX
     fn op_7xxx(&mut self) {
-        self.v[self.op_x()] += self.op_nn();
+        let vx: u8 = self.v[self.op_x()];
+        self.v[self.op_x()] = vx.wrapping_add(self.op_nn());
         self.pc += 2;
     }
 
     fn op_8xxx(&mut self) {
+        let vx: u8 = self.v[self.op_x()];
+        let vy: u8 = self.v[self.op_y()];
         match self.opcode & 0x000F {
             0 => {
                 self.v[self.op_x()] = self.v[self.op_y()];
@@ -208,17 +211,17 @@ impl Cpu {
                 } else {
                     1
                 };
-                self.v[self.op_x()] -= self.v[self.op_y()];
+                self.v[self.op_x()] = vx.wrapping_sub(vy);
             }
             6 => {
                 self.v[15] = self.v[self.op_x()] & 0x1;
                 self.v[self.op_x()] >>= 1;
             }
             7 => {
-                self.v[15] = if self.v[self.op_x()] > self.v[self.op_y()] {
-                    0
-                } else {
+                self.v[15] = if vy.wrapping_sub(vx) > 0 {
                     1
+                } else {
+                    0
                 };
                 self.v[self.op_x()] = self.v[self.op_y()] - self.v[self.op_x()];
             }
@@ -239,21 +242,21 @@ impl Cpu {
         }
     }
 
-    fn op_Axxx(&mut self) {
+    fn op_axxx(&mut self) {
         self.i = self.op_nnn() as usize;
         self.pc += 2;
     }
 
-    fn op_Bxxx(&mut self) {
+    fn op_bxxx(&mut self) {
         self.pc = (self.op_nnn() + (self.v[0] as u16)) as usize;
     }
 
-    fn op_Cxxx(&mut self) {
+    fn op_cxxx(&mut self) {
         self.v[self.op_x()] = self.op_nn() & rand::random::<u8>();
         self.pc += 2;
     }
 
-    fn op_Dxxx(&mut self) {
+    fn op_dxxx(&mut self) {
         let from = self.i;
         let to = from + (self.op_n() as usize);
         let x = self.v[self.op_x()];
@@ -263,7 +266,7 @@ impl Cpu {
         self.pc += 2;
     }
 
-    fn op_Exxx(&mut self) {
+    fn op_exxx(&mut self) {
         let v = self.v[self.op_x()] as usize;
         self.pc += match self.opcode & 0x00FF {
             0x9E => if self.keypad.pressed(v) { 4 } else { 2 },
@@ -272,7 +275,7 @@ impl Cpu {
         }
     }
 
-    fn op_Fxxx(&mut self) {
+    fn op_fxxx(&mut self) {
         match self.opcode & 0x00FF {
             0x07 => {
                 self.v[self.op_x()] = self.delay_timer;
@@ -345,7 +348,7 @@ fn not_implemented(op: usize, pc: usize) {
     println!("Not implemented:: op: {:x}, pc: {:x}", op, pc)
 }
 
-static fontset: [u8; 80] =
+static FONTSET: [u8; 80] =
     [0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70, 0xF0, 0x10, 0xF0, 0x80, 0xF0,
      0xF0, 0x10, 0xF0, 0x10, 0xF0, 0x90, 0x90, 0xF0, 0x10, 0x10, 0xF0, 0x80, 0xF0, 0x10, 0xF0,
      0xF0, 0x80, 0xF0, 0x90, 0xF0, 0xF0, 0x10, 0x20, 0x40, 0x40, 0xF0, 0x90, 0xF0, 0x90, 0xF0,
