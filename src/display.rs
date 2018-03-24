@@ -1,25 +1,31 @@
-use sdl::video;
-use sdl::Rect;
+use sdl2::Sdl;
+use sdl2::rect::Rect;
+use sdl2::pixels::Color;
+use sdl2::render::WindowCanvas;
+
 
 pub struct Display {
     gfx: [[u8; 64]; 32],
     draw_flag: bool,
-    screen: video::Surface,
+    canvas: WindowCanvas,
 }
 
-static SCALE: isize = 20;
+static SCALE: u32 = 20;
 
 impl Display {
-    pub fn new() -> Display {
+    pub fn new(sdl_context: Sdl) -> Display {
+        let video_subsystem = sdl_context.video().unwrap();
+
+        let window = video_subsystem.window("Chip-8 Emulator", 64 * SCALE, 32 * SCALE)
+                    .position_centered()
+                    .opengl()
+                    .build()
+                    .unwrap();
+    
         Display {
             gfx: [[0; 64]; 32],
             draw_flag: true,
-            screen: video::set_video_mode(64 * SCALE,
-                                          32 * SCALE,
-                                          8,
-                                          &[video::SurfaceFlag::HWSurface],
-                                          &[video::VideoFlag::DoubleBuf])
-                    .unwrap(),
+            canvas: window.into_canvas().build().unwrap(),
         }
     }
 
@@ -57,25 +63,32 @@ impl Display {
             return;
         }
         let mut pixel: u8;
-        let sc = SCALE as u16;
+        let sc = SCALE as u32;
         // let pt = |&: p: usize| { (p as i16) * (SCALE as i16) };
         let pt = |p: usize| (p as i16) * (SCALE as i16);
+
+        self.canvas.set_draw_color(Color::RGB(0, 0, 0));
+
+        self.canvas.clear();
 
         for y in 0..32 {
             for x in 0..64 {
                 pixel = if self.gfx[y][x] != 0 { 255 } else { 0 };
-                self.screen
-                    .fill_rect(Some(Rect {
-                                        x: pt(x),
-                                        y: pt(y),
-                                        w: sc,
-                                        h: sc,
-                                    }),
-                               video::RGB(pixel, pixel, pixel));
+                self.canvas.set_draw_color(
+                    Color::RGB(pixel, pixel, pixel));
+                let _ = self.canvas.fill_rect(
+                    Rect::new(
+                        pt(x).into(),
+                        pt(y).into(),
+                        sc,
+                        sc
+                    )
+                );
             }
         }
+        
+        self.canvas.present();
 
-        self.screen.flip();
         self.draw_flag = false;
     }
 }

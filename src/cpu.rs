@@ -23,7 +23,7 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    pub fn new() -> Cpu {
+    pub fn new(display: Display) -> Cpu {
         let mut cpu = Cpu {
             opcode: 0,
             memory: [0; 4096],
@@ -35,7 +35,7 @@ impl Cpu {
             delay_timer: 0,
             sound_timer: 0,
             keypad: Keypad::new(),
-            display: Display::new(),
+            display: display,
         };
 
         for i in 0..80 {

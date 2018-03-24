@@ -1,16 +1,15 @@
 [package]
 
 name = "chip8"
-version = "0.0.1"
-authors = [ "mikezaby@gmail.com"  ]
+version = "0.0.2"
+authors = [ "mikezaby@gmail.com", "Youssef Habri <youssef.habri@gmail.com>"  ]
 
 [[bin]]
-
 name = "chip8"
 path = "src/main.rs"
 
 [dependencies]
 rand = "0.3"
 
-[dependencies.sdl]
-git = "https://github.com/brson/rust-sdl.git"
+[dependencies.sdl2]
+git = "https://github.com/AngryLawyer/rust-sdl2"
