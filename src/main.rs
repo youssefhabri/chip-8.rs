@@ -1,7 +1,7 @@
 extern crate sdl2;
 
-use std::io;
 use sdl2::event::Event;
+use std::io;
 
 mod cpu;
 mod display;
@@ -32,9 +32,13 @@ fn main() {
     'main: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit {..} => break 'main,
-                Event::KeyDown { keycode: Some(key), .. } => cpu.keypad.press(key, true),
-                Event::KeyUp { keycode: Some(key), .. } => cpu.keypad.press(key, false),
+                Event::Quit { .. } => break 'main,
+                Event::KeyDown {
+                    keycode: Some(key), ..
+                } => cpu.keypad.press(key, true),
+                Event::KeyUp {
+                    keycode: Some(key), ..
+                } => cpu.keypad.press(key, false),
                 _ => {}
             }
         }
@@ -42,5 +46,4 @@ fn main() {
         cpu.emulate_cycle();
         cpu.display.draw_screen();
     }
-
 }

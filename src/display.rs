@@ -1,8 +1,7 @@
-use sdl2::Sdl;
-use sdl2::rect::Rect;
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use sdl2::render::WindowCanvas;
-
+use sdl2::Sdl;
 
 pub struct Display {
     gfx: [[u8; 64]; 32],
@@ -16,12 +15,13 @@ impl Display {
     pub fn new(sdl_context: Sdl) -> Display {
         let video_subsystem = sdl_context.video().unwrap();
 
-        let window = video_subsystem.window("Chip-8 Emulator", 64 * SCALE, 32 * SCALE)
-                    .position_centered()
-                    .opengl()
-                    .build()
-                    .unwrap();
-    
+        let window = video_subsystem
+            .window("Chip-8 Emulator", 64 * SCALE, 32 * SCALE)
+            .position_centered()
+            .opengl()
+            .build()
+            .unwrap();
+
         Display {
             gfx: [[0; 64]; 32],
             draw_flag: true,
@@ -74,19 +74,13 @@ impl Display {
         for y in 0..32 {
             for x in 0..64 {
                 pixel = if self.gfx[y][x] != 0 { 255 } else { 0 };
-                self.canvas.set_draw_color(
-                    Color::RGB(pixel, pixel, pixel));
-                let _ = self.canvas.fill_rect(
-                    Rect::new(
-                        pt(x).into(),
-                        pt(y).into(),
-                        sc,
-                        sc
-                    )
-                );
+                self.canvas.set_draw_color(Color::RGB(pixel, pixel, pixel));
+                let _ = self
+                    .canvas
+                    .fill_rect(Rect::new(pt(x).into(), pt(y).into(), sc, sc));
             }
         }
-        
+
         self.canvas.present();
 
         self.draw_flag = false;

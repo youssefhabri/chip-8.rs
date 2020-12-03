@@ -9,7 +9,6 @@ name = "chip8"
 path = "src/main.rs"
 
 [dependencies]
-rand = "0.3"
 
 [dependencies.sdl2]
 git = "https://github.com/AngryLawyer/rust-sdl2"

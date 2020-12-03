@@ -1,9 +1,6 @@
-extern crate rand;
-
+use std::env;
 use std::fs::File;
 use std::io::Read;
-// use std::rand;
-use std::{env, num};
 
 use display::Display;
 use keypad::Keypad;
@@ -184,46 +181,33 @@ impl Cpu {
         let vy: u8 = self.v[self.op_y()];
         match self.opcode & 0x000F {
             0 => {
-                self.v[self.op_x()] = self.v[self.op_y()];
+                self.v[self.op_x()] = vy;
             }
             1 => {
-                self.v[self.op_x()] |= self.v[self.op_y()];
+                self.v[self.op_x()] |= vy;
             }
             2 => {
-                self.v[self.op_x()] &= self.v[self.op_y()];
+                self.v[self.op_x()] &= vy;
             }
             3 => {
-                self.v[self.op_x()] ^= self.v[self.op_y()];
+                self.v[self.op_x()] ^= vy;
             }
             4 => {
                 // self.v[self.op_x()] += self.v[self.op_y()];
-                self.v[self.op_x()] =
-                    (num::Wrapping(self.v[self.op_x()]) + num::Wrapping(self.v[self.op_y()])).0;
-                self.v[15] = if self.v[self.op_x()] < self.v[self.op_y()] {
-                    1
-                } else {
-                    0
-                };
+                self.v[15] = if (vx as u16 + vy as u16) > 0xFF { 1 } else { 0 };
+                self.v[self.op_x()] = vx.wrapping_add(vy);
             }
             5 => {
-                self.v[15] = if self.v[self.op_y()] > self.v[self.op_x()] {
-                    0
-                } else {
-                    1
-                };
+                self.v[15] = if vy > vx { 0 } else { 1 };
                 self.v[self.op_x()] = vx.wrapping_sub(vy);
             }
             6 => {
-                self.v[15] = self.v[self.op_x()] & 0x1;
+                self.v[15] = vx & 0x1;
                 self.v[self.op_x()] >>= 1;
             }
             7 => {
-                self.v[15] = if vy.wrapping_sub(vx) > 0 {
-                    1
-                } else {
-                    0
-                };
-                self.v[self.op_x()] = self.v[self.op_y()] - self.v[self.op_x()];
+                self.v[15] = if vy > vx { 0 } else { 1 };
+                self.v[self.op_x()] = vy.wrapping_sub(vx);
             }
             0xE => {
                 self.v[15] = self.v[self.op_x()] >> 7;
@@ -261,16 +245,29 @@ impl Cpu {
         let to = from + (self.op_n() as usize);
         let x = self.v[self.op_x()];
         let y = self.v[self.op_y()];
-        self.v[15] = self.display
+        self.v[15] = self
+            .display
             .draw(x as usize, y as usize, &self.memory[from..to]);
         self.pc += 2;
     }
 
     fn op_exxx(&mut self) {
-        let v = self.v[self.op_x()] as usize;
+        let vx = self.v[self.op_x()] as usize;
         self.pc += match self.opcode & 0x00FF {
-            0x9E => if self.keypad.pressed(v) { 4 } else { 2 },
-            0xA1 => if !self.keypad.pressed(v) { 4 } else { 2 },
+            0x9E => {
+                if self.keypad.pressed(vx) {
+                    4
+                } else {
+                    2
+                }
+            }
+            0xA1 => {
+                if !self.keypad.pressed(vx) {
+                    4
+                } else {
+                    2
+                }
+            }
             _ => 2,
         }
     }
@@ -348,10 +345,10 @@ fn not_implemented(op: usize, pc: usize) {
     println!("Not implemented:: op: {:x}, pc: {:x}", op, pc)
 }
 
-static FONTSET: [u8; 80] =
-    [0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70, 0xF0, 0x10, 0xF0, 0x80, 0xF0,
-     0xF0, 0x10, 0xF0, 0x10, 0xF0, 0x90, 0x90, 0xF0, 0x10, 0x10, 0xF0, 0x80, 0xF0, 0x10, 0xF0,
-     0xF0, 0x80, 0xF0, 0x90, 0xF0, 0xF0, 0x10, 0x20, 0x40, 0x40, 0xF0, 0x90, 0xF0, 0x90, 0xF0,
-     0xF0, 0x90, 0xF0, 0x10, 0xF0, 0xF0, 0x90, 0xF0, 0x90, 0x90, 0xE0, 0x90, 0xE0, 0x90, 0xE0,
-     0xF0, 0x80, 0x80, 0x80, 0xF0, 0xE0, 0x90, 0x90, 0x90, 0xE0, 0xF0, 0x80, 0xF0, 0x80, 0xF0,
-     0xF0, 0x80, 0xF0, 0x80, 0x80];
+static FONTSET: [u8; 80] = [
+    0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70, 0xF0, 0x10, 0xF0, 0x80, 0xF0, 0xF0,
+    0x10, 0xF0, 0x10, 0xF0, 0x90, 0x90, 0xF0, 0x10, 0x10, 0xF0, 0x80, 0xF0, 0x10, 0xF0, 0xF0, 0x80,
+    0xF0, 0x90, 0xF0, 0xF0, 0x10, 0x20, 0x40, 0x40, 0xF0, 0x90, 0xF0, 0x90, 0xF0, 0xF0, 0x90, 0xF0,
+    0x10, 0xF0, 0xF0, 0x90, 0xF0, 0x90, 0x90, 0xE0, 0x90, 0xE0, 0x90, 0xE0, 0xF0, 0x80, 0x80, 0x80,
+    0xF0, 0xE0, 0x90, 0x90, 0x90, 0xE0, 0xF0, 0x80, 0xF0, 0x80, 0xF0, 0xF0, 0x80, 0xF0, 0x80, 0x80,
+];
